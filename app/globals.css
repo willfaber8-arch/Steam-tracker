@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-cassette-bg text-cassette-cream;
+    background-image: radial-gradient(
+        ellipse at top,
+        rgba(226, 150, 60, 0.08),
+        transparent 60%
+      ),
+      linear-gradient(180deg, #1b140f 0%, #16110c 100%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: rgba(226, 150, 60, 0.35);
+    color: #f2e8d8;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #1b140f;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #3a2a1c;
+    border-radius: 999px;
+  }
+}
+
+@layer components {
+  .grain-overlay {
+    @apply pointer-events-none fixed inset-0 z-50 bg-grain bg-repeat;
+    mix-blend-mode: overlay;
+  }
+
+  .panel {
+    @apply rounded-xl border border-cassette-groove bg-cassette-surface shadow-tape;
+  }
+
+  .panel-inset {
+    @apply rounded-lg border border-cassette-groove/70 bg-cassette-surface2;
+  }
+
+  .label-tape {
+    @apply inline-block rounded-sm bg-cassette-tape/20 px-2 py-0.5 text-[11px] uppercase tracking-[0.2em] text-cassette-amber;
+  }
+
+  .btn-reel {
+    @apply inline-flex items-center gap-2 rounded-full border border-cassette-amberdim/60 bg-cassette-surface2 px-4 py-2 text-sm font-medium text-cassette-cream transition-colors hover:border-cassette-amber hover:text-cassette-amber;
+  }
+}
