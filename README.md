@@ -16,7 +16,9 @@ accumulated history is what powers the trend charts and streak tracking.
 - **Frontend/backend:** Next.js 14 (App Router), Vercel Serverless Functions
 - **Database:** Vercel Postgres (`@vercel/postgres`) — Supabase's Postgres
   works too, since it's just a connection string
-- **Scheduled jobs:** Vercel Cron (`vercel.json`), polling every 5 hours
+- **Scheduled jobs:** Vercel Cron (`vercel.json`), polling once a day (Hobby
+  plan accounts reject cron schedules that fire more than once per day; on a
+  Pro plan you can tighten `vercel.json`'s schedule back to every 4-6 hours)
 - **Charts:** Recharts
 - **Styling:** Tailwind CSS, IBM Plex Mono + Lora
 
@@ -69,7 +71,9 @@ curl http://localhost:3000/api/cron/snapshot
    `ensureSchema()` itself before doing anything else, so this step is
    actually optional).
 6. Vercel Cron (configured in `vercel.json`) will hit
-   `/api/cron/snapshot` every 5 hours from then on.
+   `/api/cron/snapshot` once a day (13:00 UTC) from then on — Hobby plan
+   accounts can't schedule cron more often than daily; Pro plans can tighten
+   this back to every 4-6 hours.
 
 ## Data model
 
