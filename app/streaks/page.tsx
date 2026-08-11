@@ -1,4 +1,10 @@
-import { isDbConfigured, getCurrentStreak, getDailyTotals, getLongestStreak } from "@/lib/db";
+import {
+  isDbConfigured,
+  getPlayDates,
+  getDailyTotals,
+  currentStreakFromDates,
+  longestStreakFromDates,
+} from "@/lib/db";
 import { isoDateDaysAgo, todayIso } from "@/lib/format";
 import { StatCard } from "@/components/StatCard";
 import { StreakGrid } from "@/components/StreakGrid";
@@ -16,11 +22,12 @@ export default async function StreaksPage() {
   const startDate = isoDateDaysAgo(GRID_DAYS - 1);
   const endDate = todayIso();
 
-  const [currentStreak, longestStreak, dailyTotals] = await Promise.all([
-    getCurrentStreak(),
-    getLongestStreak(),
+  const [playDates, dailyTotals] = await Promise.all([
+    getPlayDates(),
     getDailyTotals(startDate, endDate),
   ]);
+  const currentStreak = currentStreakFromDates(playDates);
+  const longestStreak = longestStreakFromDates(playDates);
 
   const byDate = new Map(dailyTotals.map((d) => [d.date, d.minutes_played]));
   const days = Array.from({ length: GRID_DAYS }, (_, i) => {

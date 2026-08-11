@@ -105,6 +105,7 @@ export async function accumulateDailyDelta(
 
 export interface SnapshotJobResult {
   gamesProcessed: number;
+  gamesFailed: number;
   totalMinutesDeltaToday: number;
   timestamp: string;
 }
@@ -141,20 +142,23 @@ export async function getRecentlyPlayed(limit = 10): Promise<
     icon_url: string | null;
     minutes_last_2weeks: number;
   }>`
-    SELECT DISTINCT ON (g.id)
-      g.steam_app_id, g.name, g.icon_url, s.minutes_last_2weeks
-    FROM playtime_snapshots s
-    JOIN games g ON g.id = s.game_id
-    ORDER BY g.id, s.snapshot_timestamp DESC
+    SELECT steam_app_id, name, icon_url, minutes_last_2weeks
+    FROM (
+      SELECT DISTINCT ON (g.id)
+        g.steam_app_id, g.name, g.icon_url, s.minutes_last_2weeks
+      FROM playtime_snapshots s
+      JOIN games g ON g.id = s.game_id
+      ORDER BY g.id, s.snapshot_timestamp DESC
+    ) latest
+    WHERE minutes_last_2weeks > 0
+    ORDER BY minutes_last_2weeks DESC
+    LIMIT ${limit}
   `;
-  return result.rows
-    .filter((r) => r.minutes_last_2weeks > 0)
-    .sort((a, b) => b.minutes_last_2weeks - a.minutes_last_2weeks)
-    .slice(0, limit);
+  return result.rows;
 }
 
 /** Distinct calendar dates (ascending) that had at least one minute of playtime. */
-async function getPlayDates(): Promise<string[]> {
+export async function getPlayDates(): Promise<string[]> {
   const result = await sql<{ date: string }>`
     SELECT date::text AS date
     FROM daily_deltas
@@ -165,8 +169,10 @@ async function getPlayDates(): Promise<string[]> {
   return result.rows.map((r) => r.date);
 }
 
-export async function getCurrentStreak(): Promise<number> {
-  const dates = await getPlayDates();
+/** Pure computation over an ascending list of played-dates — kept separate from
+ * the DB fetch so callers that already have `dates` (e.g. the streaks page,
+ * which needs both current and longest streak) don't have to re-query. */
+export function currentStreakFromDates(dates: string[]): number {
   if (dates.length === 0) return 0;
   const daySet = new Set(dates);
   const today = new Date();
@@ -188,8 +194,9 @@ export async function getCurrentStreak(): Promise<number> {
   return streak;
 }
 
-export async function getLongestStreak(): Promise<number> {
-  const dates = await getPlayDates();
+/** Pure computation over an ascending list of played-dates — see
+ * `currentStreakFromDates` for why this is split out from the DB fetch. */
+export function longestStreakFromDates(dates: string[]): number {
   if (dates.length === 0) return 0;
   let longest = 1;
   let current = 1;
@@ -205,6 +212,16 @@ export async function getLongestStreak(): Promise<number> {
     longest = Math.max(longest, current);
   }
   return longest;
+}
+
+export async function getCurrentStreak(): Promise<number> {
+  const dates = await getPlayDates();
+  return currentStreakFromDates(dates);
+}
+
+export async function getLongestStreak(): Promise<number> {
+  const dates = await getPlayDates();
+  return longestStreakFromDates(dates);
 }
 
 export async function getDailyTotals(
